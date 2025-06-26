@@ -1,3 +1,9 @@
+# SQLite compatibility fix for Chroma
+import sys
+import pysqlite3
+sys.modules["sqlite3"] = sys.modules.pop("pysqlite3")
+
+
 import certifi
 import requests
 import re
