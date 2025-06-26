@@ -62,6 +62,8 @@ HEADERS = {
 }
 
 os.makedirs(DOWNLOAD_FOLDER, exist_ok=True)
+with open(CONTEXT_FILE, "w", encoding="utf-8") as f:
+    f.write("")
 
 
 
