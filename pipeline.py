@@ -2,8 +2,6 @@
 import sys
 import pysqlite3
 sys.modules["sqlite3"] = sys.modules.pop("pysqlite3")
-
-
 import certifi
 import requests
 import re
@@ -50,7 +48,7 @@ def google_search(query):
     response = requests.get(url, params=params)
     results = response.json().get("items", [])
     links = [item["link"] for item in results]
-    st.info(f"🔗 Found {len(links)} links for query: {query}")
+    # st.info(f"🔗 Found {len(links)} links for query: {query}")
     return links
 @st.cache_data(show_spinner=False, ttl=3600)
 def cached_google_search(query):
@@ -72,9 +70,9 @@ write_lock = asyncio.Lock()
 
 async def async_download(session: ClientSession, url: str, i: int, save_folder: str = DOWNLOAD_FOLDER):
     try:
-        st.info(f"🔍 Trying to download: {url}")
+        # st.info(f"🔍 Trying to download: {url}")
         async with session.get(url, headers=HEADERS, ssl=False, timeout=aiohttp.ClientTimeout(total=20)) as resp:
-            st.info(f"ℹ️ Status {resp.status} - Content-Type: {resp.headers.get('Content-Type')}")
+            # st.info(f"ℹ️ Status {resp.status} - Content-Type: {resp.headers.get('Content-Type')}")
             content_type = resp.headers.get("Content-Type", "").lower()
             if "application/pdf" in content_type or url.endswith(".pdf"):
                 file_name = url.split("/")[-1] or f"file_{i}.pdf"
@@ -82,7 +80,7 @@ async def async_download(session: ClientSession, url: str, i: int, save_folder: 
                 content = await resp.read()
                 with open(file_path, "wb") as f:
                     f.write(content)
-                st.info(f"✅ PDF downloaded: {file_name}")
+                # st.info(f"✅ PDF downloaded: {file_name}")
                 return ("pdf", file_path, file_name, i)
 
             elif "text/html" in content_type or url.endswith(".html"):
@@ -91,10 +89,10 @@ async def async_download(session: ClientSession, url: str, i: int, save_folder: 
                 text = await resp.text()
                 with open(file_path, "w", encoding="utf-8") as f:
                     f.write(text)
-                st.info(f"✅ HTML downloaded: {file_name}")
+                # st.info(f"✅ HTML downloaded: {file_name}")
                 return ("html", file_path, file_name, i, text, url)
-            else:
-                st.warning(f"⚠️ Skipping unknown content-type: {content_type}")
+            # else:
+                # st.warning(f"⚠️ Skipping unknown content-type: {content_type}")
 
     except Exception as e:
         st.error(f"❌ Failed to download {url}: {e}")
@@ -625,9 +623,9 @@ if st.button("🔧 Extract Technical Specifications"):
         with st.spinner("⏳ Processing..."):
             try:
                 links = cached_google_search(query)
-                st.write("🔗 Google Search Results:")
-                for i, link in enumerate(links):
-                    st.write(f"{i+1}. {link}")
+                # st.write("🔗 Google Search Results:")
+                # for i, link in enumerate(links):
+                #     st.write(f"{i+1}. {link}")
                 asyncio.run(download_and_process_all(links))
                 documents = load_and_split_context_file(CONTEXT_FILE)
                 vector_db = create_vector_db(documents)
@@ -652,15 +650,7 @@ if st.session_state.vector_db is not None:
     if st.button("🎯 Query Device Docs"):
         with st.spinner("🔍 Searching and processing..."):
             try:
-                # Similar chunks from vector DB
                 docs = st.session_state.vector_db.similarity_search(user_query, k=30)
-                # seen = set()
-                # unique_docs = []
-                # for doc in docs:
-                #     doc_hash = hash(doc.page_content)
-                #     if doc_hash not in seen:
-                #         seen.add(doc_hash)
-                #         unique_docs.append(doc)
                 context = "\n\n".join(
                     f"--- From {doc.metadata['file_name']} ---\n{doc.page_content}"
                     for doc in docs
@@ -669,9 +659,6 @@ if st.session_state.vector_db is not None:
                     query=user_query,
                     context=context
                 )
-
-
-                
                 st.session_state.llm_answer = structured_answer
 
             except Exception as e:
