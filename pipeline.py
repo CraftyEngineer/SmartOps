@@ -79,7 +79,7 @@ async def async_download(session: ClientSession, url: str, i: int, save_folder: 
                 content = await resp.read()
                 with open(file_path, "wb") as f:
                     f.write(content)
-                print(f"✅ PDF downloaded: {file_name}")
+                st.info(f"✅ PDF downloaded: {file_name}")
                 return ("pdf", file_path, file_name, i)
 
             elif "text/html" in content_type or url.endswith(".html"):
@@ -88,7 +88,7 @@ async def async_download(session: ClientSession, url: str, i: int, save_folder: 
                 text = await resp.text()
                 with open(file_path, "w", encoding="utf-8") as f:
                     f.write(text)
-                print(f"✅ HTML downloaded: {file_name}")
+                st.info(f"✅ HTML downloaded: {file_name}")
                 return ("html", file_path, file_name, i, text, url)
 
     except Exception as e:
@@ -102,10 +102,14 @@ async def process_and_append(file_info):
     if file_info[0] == "pdf":
         _, file_path, file_name, i = file_info
         text = await asyncio.to_thread(cached_extract_pdf_text, file_path)
+        print(f"📄 Extracted {len(text)} characters from: {file_name}")
+
 
     elif file_info[0] == "html":
         _, file_path, file_name, i, html_text, url = file_info
         text = await asyncio.to_thread(cached_extract_html_text, html_text)
+        print(f"📄 Extracted {len(text)} characters from: {file_name}")
+
 
         # Embedded PDF detection
         embedded_pdfs = extract_embedded_pdfs(html_text, url)
