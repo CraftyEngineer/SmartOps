@@ -18,3 +18,4 @@ requests
 sentence-transformers
 streamlit
 sqlite3>=3.35.0
+--upgrade pip
