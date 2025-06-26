@@ -62,8 +62,7 @@ HEADERS = {
 }
 
 os.makedirs(DOWNLOAD_FOLDER, exist_ok=True)
-with open(CONTEXT_FILE, "w", encoding="utf-8") as f:
-    f.write("")
+
 
 
 
@@ -129,6 +128,8 @@ async def process_and_append(file_info):
         append_to_context_file(file_name, text, i)
 
 async def download_and_process_all(links):
+    with open(CONTEXT_FILE, "w", encoding="utf-8") as f:
+        f.write("")
     os.makedirs(DOWNLOAD_FOLDER, exist_ok=True)
     tasks = []
     connector = aiohttp.TCPConnector(limit=MAX_CONCURRENCY, ssl=False)
