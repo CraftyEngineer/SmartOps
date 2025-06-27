@@ -632,7 +632,7 @@ if st.button("🔧 Extract Technical Specifications"):
                 st.session_state.vector_db = vector_db
                 result = extract_specifications(device, vector_db, documents)
                 st.session_state.result_json = result
-                st.success("✅ Extraction Complete!")
+                
 
             except Exception as e:
                 st.error(f"❌ Error: {str(e)}")
