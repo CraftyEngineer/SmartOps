@@ -651,7 +651,7 @@ if st.session_state.vector_db is not None:
         with st.spinner("🔍 Searching and processing..."):
             try:
                 sim_docs = st.session_state.vector_db.similarity_search(user_query, k=10)
-                var_docs = results = vector_db.max_marginal_relevance_search(
+                var_docs = results = st.session_state.vector_db.max_marginal_relevance_search(
                                                 query=user_query,
                                                 k=10,              # Final number of results you want
                                                 fetch_k=30,      # Initial number of documents to fetch before reranking
