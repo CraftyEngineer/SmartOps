@@ -633,7 +633,30 @@ if "result_json" not in st.session_state:
     st.session_state.result_json = None
 if "llm_answer" not in st.session_state:
     st.session_state.llm_answer = None
-device = st.text_input("🔍 Enter the Device Model/Name")
+if "device_input" not in st.session_state:
+    st.session_state.device_input = ""
+
+st.markdown("#### Try these devices (or try your own)")
+# Make buttons render inline with minimal spacing
+st.markdown(
+    """
+    <style>
+    div.stButton { display: inline-block; margin-right: 8px; }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+if st.button("Carrier HVAC 24SCA4", key="btn_carrier_24SCA4"):
+    st.session_state.device_input = "Carrier HVAC 24SCA4"
+    st.rerun()
+if st.button("Siemens SITRANS P DS III Pressure Transmitter", key="btn_sitrans_p"):
+    st.session_state.device_input = "Siemens SITRANS P DS III Pressure Transmitter"
+    st.rerun()
+if st.button("Altivar Machine ATV320", key="btn_atv320"):
+    st.session_state.device_input = "Altivar Machine ATV320"
+    st.rerun()
+
+device = st.text_input("🔍 Enter the Device Model/Name", key="device_input")
 st.session_state.device_name = device
 query = f"{device} owner's manual PDF filetype:pdf"
 if st.button("🔧 Extract Technical Specifications"):
