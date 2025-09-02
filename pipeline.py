@@ -19,8 +19,17 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_chroma import Chroma
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
-import camelot
-import cv2
+# Optional heavy deps (often unavailable on Streamlit Cloud)
+try:
+    import camelot  # type: ignore
+    HAS_CAMELOT = True
+except Exception:
+    HAS_CAMELOT = False
+try:
+    import cv2  # type: ignore
+    HAS_OPENCV = True
+except Exception:
+    HAS_OPENCV = False
 import numpy as np
 from PIL import Image
 from langchain.vectorstores import Chroma
@@ -169,6 +178,8 @@ def cached_extract_html_text(html):
 
 
 def preprocess_image_opencv(pil_img):
+    if not HAS_OPENCV:
+        return pil_img.convert("L")
     img = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     _, binary = cv2.threshold(gray, 150, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
@@ -214,7 +225,7 @@ def extract_pdf_text_with_tables(file_path):
     except Exception as e:
         print(f"⚠️ Failed extracting tables with pdfplumber: {e}")
 
-    if tables_output.strip() == "":
+    if tables_output.strip() == "" and HAS_CAMELOT:
         try:
             camelot_tables = camelot.read_pdf(file_path, pages='all', flavor='lattice')
             for table in camelot_tables:
