@@ -1,11 +1,16 @@
 # SQLite compatibility fix for Chroma
 import sys
-import pysqlite3
-sys.modules["sqlite3"] = sys.modules.pop("pysqlite3")
+try:
+    import pysqlite3  # Prefer bundled SQLite if available
+    sys.modules["sqlite3"] = sys.modules.pop("pysqlite3")
+except Exception:
+    # Fallback to stdlib sqlite3 when pysqlite3 isn't installed
+    import sqlite3  # noqa: F401
 import certifi
 import requests
 import re
 import os
+from dotenv import load_dotenv
 import pdfplumber
 import pytesseract
 from pdf2image import convert_from_path
@@ -33,6 +38,9 @@ from aiohttp import ClientSession
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
 from chromadb import PersistentClient
+
+# Load environment variables from .env if present
+load_dotenv()
 
 
 GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY')
@@ -303,7 +311,7 @@ def download_file(url, i, save_folder=DOWNLOAD_FOLDER):
         print(f"❌ Skipping {url}: {e}")
 
 GROQ_API_KEY = os.getenv('GROQ_API_KEY')
-GROQ_MODEL = "llama3-8b-8192"
+GROQ_MODEL = "deepseek-r1-distill-llama-70b"
 GEMINI_MODEL = "gemini-2.0-flash-lite"
 CONTEXT_FILE = "downloads/context.txt"
 CHUNK_SIZE = 500
@@ -682,3 +690,4 @@ st.markdown("---")
 if st.button("🔁 Reset Everything"):
     reset_app()
     st.rerun()
+

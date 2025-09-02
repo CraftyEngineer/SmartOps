@@ -18,4 +18,5 @@ pytesseract
 requests
 sentence-transformers
 streamlit
+python-dotenv
 
