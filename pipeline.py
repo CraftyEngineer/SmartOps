@@ -146,15 +146,17 @@ async def download_and_process_all(links):
     with open(CONTEXT_FILE, "w", encoding="utf-8") as f:
         f.write("")
     os.makedirs(DOWNLOAD_FOLDER, exist_ok=True)
-    tasks = []
     connector = aiohttp.TCPConnector(limit=MAX_CONCURRENCY, ssl=False)
+    success_count = 0
     async with ClientSession(connector=connector) as session:
-        for i, link in enumerate(links[:5]):
-            tasks.append(async_download(session, link, i))
-
-        files = await asyncio.gather(*tasks)
-        parse_tasks = [process_and_append(file_info) for file_info in files if file_info]
-        await asyncio.gather(*parse_tasks)
+        for i, link in enumerate(links):
+            if success_count >= 3:
+                break
+            file_info = await async_download(session, link, i)
+            if not file_info:
+                continue
+            await process_and_append(file_info)
+            success_count += 1
 
 
 @st.cache_data(show_spinner=False)
