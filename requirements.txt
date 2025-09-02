@@ -10,7 +10,7 @@ langchain-huggingface
 langchain-chroma
 langchain-text-splitters
 numpy
-opencv-python
+opencv-python-headless
 pdf2image
 pdfplumber
 pillow
