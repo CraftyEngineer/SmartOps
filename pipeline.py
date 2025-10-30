@@ -32,12 +32,7 @@ except Exception:
     HAS_OPENCV = False
 import numpy as np
 from PIL import Image
-from langchain.vectorstores import Chroma
-from langchain.embeddings import HuggingFaceEmbeddings
-import os
 import shutil
-from langchain.schema import Document
-from langchain.text_splitter import RecursiveCharacterTextSplitter
 import random
 import streamlit as st
 import concurrent.futures
@@ -324,7 +319,7 @@ def download_file(url, i, save_folder=DOWNLOAD_FOLDER):
         print(f"❌ Skipping {url}: {e}")
 
 GROQ_API_KEY = os.getenv('GROQ_API_KEY')
-GROQ_MODEL = "deepseek-r1-distill-llama-70b"
+GROQ_MODEL = "openai/gpt-oss-120b"
 GEMINI_MODEL = "gemini-2.0-flash-lite"
 CONTEXT_FILE = "downloads/context.txt"
 CHUNK_SIZE = 500
@@ -401,6 +396,35 @@ def create_vector_db(docs, persist_dir=PERSIST_DIR):
     return vector_db
 
 
+def _groq_chat_completion(system_prompt: str, user_content: str, temperature: float = 0.2, max_tokens: int = 2048) -> str:
+    if not GROQ_API_KEY:
+        raise RuntimeError("GROQ_API_KEY is not set")
+
+    url = "https://api.groq.com/openai/v1/chat/completions"
+    headers = {"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"}
+    data = {
+        "model": GROQ_MODEL,
+        "messages": [
+            {"role": "system", "content": system_prompt.strip()},
+            {"role": "user", "content": user_content},
+        ],
+        "temperature": temperature,
+        "max_tokens": max_tokens,
+    }
+    resp = requests.post(url, headers=headers, json=data)
+    # Surface detailed server errors to the UI to avoid opaque 400s
+    try:
+        resp.raise_for_status()
+    except Exception:
+        detail = None
+        try:
+            detail = resp.json()
+        except Exception:
+            detail = resp.text
+        raise RuntimeError(f"Groq API error {resp.status_code}: {detail}")
+    payload = resp.json()
+    return payload["choices"][0]["message"]["content"]
+
 def query_groq_api(query, context):
     system_prompt = """
 You are an expert in extracting structured technical information from technical manuals.
@@ -462,25 +486,12 @@ Rules:
 14. **NO ranges like “multiple” or “various” unless explicitly stated.**
 """
 
-    data = {
-        "model": GROQ_MODEL,
-        "messages": [
-            {"role": "system", "content": system_prompt.strip()},
-            {"role": "user", "content": f"QUERY: {query}\n\nCONTEXT:\n{context}"}
-        ],
-        "temperature": 0.2,
-        "max_tokens": 2048
-    }
-
-    url = "https://api.groq.com/openai/v1/chat/completions"
-    headers = {
-        "Authorization": f"Bearer {GROQ_API_KEY}",
-        "Content-Type": "application/json"
-    }
-
-    response = requests.post(url, headers=headers, json=data)
-    response.raise_for_status()
-    return response.json()["choices"][0]["message"]["content"]
+    return _groq_chat_completion(
+        system_prompt=system_prompt,
+        user_content=f"QUERY: {query}\n\nCONTEXT:\n{context}",
+        temperature=0.2,
+        max_tokens=2048,
+    )
 
 def search_vector_db(query):
     return vector_db.similarity_search(query, k=2)
@@ -561,8 +572,7 @@ def extract_specifications(model_number, vector_db, documents):
 
 
 def query_gemini_api(query, context):
-
-    """Query the Gemini API for technical specifications"""
+    """Currently routed through Groq for Q&A over docs; rename kept for UI semantics."""
     system_prompt = """
 You are a helpful technical assistant. You are given chunks of a product's official manual and documentation, and your task is to answer user questions about the device.
 
@@ -592,26 +602,12 @@ If the query is vague or general, return the most relevant structured and techni
 
 Always act as if you're responding to a technician or engineer who needs precise answers.
 """
-
-    data = {
-        "model": GROQ_MODEL,
-        "messages": [
-            {"role": "system", "content": system_prompt.strip()},
-            {"role": "user", "content": f"QUERY: {query}\n\nCONTEXT:\n{context}"}
-        ],
-        "temperature": 0.2,
-        "max_tokens": 2048
-    }
-
-    url = "https://api.groq.com/openai/v1/chat/completions"
-    headers = {
-        "Authorization": f"Bearer {GROQ_API_KEY}",
-        "Content-Type": "application/json"
-    }
-
-    response = requests.post(url, headers=headers, json=data)
-    response.raise_for_status()
-    return response.json()["choices"][0]["message"]["content"]
+    return _groq_chat_completion(
+        system_prompt=system_prompt,
+        user_content=f"QUERY: {query}\n\nCONTEXT:\n{context}",
+        temperature=0.2,
+        max_tokens=2048,
+    )
 def reset_app():
     # Clear session state
     for key in list(st.session_state.keys()):

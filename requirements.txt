@@ -2,7 +2,6 @@ aiohttp
 beautifulsoup4
 certifi
 camelot-py[cv]
-pysqlite3-binary
 chromadb
 langchain
 langchain-community
